@@ -1,9 +1,9 @@
 # Contribution [1]: Adapter: Moonshot Kimi Model Provider
 
-**Contribution Number:** 1
+**Contribution Number:** 1  
 **Student:** Jonathan Ballona Sanchez  
-**Issue:** https://github.com/orthogonalhq/nous-core/issues/319
-**Status:** Phase I [In Progress]
+**Issue:** https://github.com/orthogonalhq/nous-core/issues/319  
+**Status:** Phase I [In Progress]  
 
 ---
 
