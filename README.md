@@ -1,15 +1,16 @@
-# Contribution [#]: [Issue Title]
+# Contribution [1]: Adapter: Moonshot Kimi Model Provider
 
-**Contribution Number:** [1 / 2 / 3]  
-**Student:** [Your Name]  
-**Issue:** [GitHub issue link]  
-**Status:** [Phase I / Phase II / Phase III / Phase IV] [In Progress / Complete]
+**Contribution Number:** 1
+**Student:** Jonathan Ballona Sanchez  
+**Issue:** https://github.com/orthogonalhq/nous-core/issues/319
+**Status:** Phase I [In Progress]
 
 ---
 
 ## Why I Chose This Issue
 
-[1-2 paragraphs explaining why this issue interests you, how it matches your skills/learning goals, what you hope to learn]
+I want to resolve the issue about adding the missing Moonshot Kimi Model Provider Adapter because I'm interested in using creative ways to use llms and benchmarking them to see the practical use of them. I currently have experience with llms, rag, and llm evals which is why I think this issue matches my skillset relatively well. I am hoping to learn how to add an llm provider to a project with established abstractions, rather than my own. Working on someone else's code means that I would have to adapt to other people's architecture, style, and more.
+
 
 ---
 
