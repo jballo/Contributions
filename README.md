@@ -9,7 +9,17 @@
 
 ## Why I Chose This Issue
 
-I want to resolve the issue about adding the missing Moonshot Kimi Model Provider Adapter because I'm interested in using creative ways to use llms and benchmarking them to see the practical use of them. I currently have experience with llms, rag, and llm evals which is why I think this issue matches my skillset relatively well. I am hoping to learn how to add an llm provider to a project with established abstractions, rather than my own. Working on someone else's code means that I would have to adapt to other people's architecture, style, and more.
+I want to resolve the issue about adding the missing Moonshot Kimi Model Provider Adapter because I'm interested in using creative ways to use llms and benchmarking them to see the practical use of them. I have experience with llms, rag, and llm evals which is why I think this issue is a strong fit.
+
+Why it's a good match:
+1. **Relevant experience** — I've worked directly with provider APIs and their request/response formats.
+2. **Contained scope** — it follows an existing adapter pattern instead of
+   touching core logic, making it a realistic contribution.
+3. **Clear gap** — nous-core supports other providers but can't call Kimi yet,
+   so the goal is well defined.
+
+What I'll get out of it most is adapting to someone else's architecture and
+conventions rather than my own.
 
 
 ---
