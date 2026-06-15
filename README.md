@@ -55,8 +55,6 @@ A new leafe is expecte let users:
 
 ### Environment Setup
 
-[Notes on setting up your local development environment - challenges you faced, how you solved them]
-
 ### Steps to Reproduce
 
 #### Prerequesities (environment)
@@ -207,8 +205,9 @@ pnpm --filter @nous/subcortex-providers exec vitest run \
 **PR Description:** [Draft or final PR description - much of the content above can be adapted]
 
 **Maintainer Feedback:**
-- [Date]: [Summary of feedback received]
-- [Date]: [How you addressed it]
+- **Jun 7, 2026** ([issue #319](https://github.com/orthogonalhq/nous-core/issues/319)): `main` is a release branch — don't develop there. Fork off `dev` or a team integration branch. Adapter surface refactor coming on a special integration branch for the class.
+- **Jun 11, 2026:** Target `feat/contributor-friendly-inference-provider-surface` for PRs, not `dev`. Implement as certified provider leaves under `self/subcortex/providers/src/providers/<vendor>/`; don't hand-edit generated catalogs. [Provider adapter docs](https://docs.nue.orthg.nl/docs/development/provider-adapters) are the source of truth.
+- **Jun 13, 2026:** Fast-forwarded the integration branch after I flagged it was still on the flat adapter layout while the docs described the leaf structure.
 
 **Status:** [Awaiting review / Iterating / Approved / Merged]
 
@@ -222,7 +221,13 @@ pnpm --filter @nous/subcortex-providers exec vitest run \
 
 ### Challenges Overcome
 
-[What was hard and how you solved it]
+Before I could reproduce the gap locally, I hit a few blockers from the [issue thread](https://github.com/orthogonalhq/nous-core/issues/319):
+
+1. **Wrong starting branch** — My fork defaulted to `main`, which doesn't have the contributor-friendly provider surface. On `main`, `OpenAiCompatibleProvider` still hard-codes `OPENAI_API_KEY`, so Kimi can't ship as a simple config entry until the shared chat-completions refactor ([#324](https://github.com/orthogonalhq/nous-core/issues/324)).
+2. **Stale issue body vs current approach** — The issue pointed at a flat `moonshot-kimi-provider.ts` file. The maintainer clarified Kimi should be a **certified provider leaf**, not a standalone adapter class.
+3. **Integration branch lag** — `feat/contributor-friendly-inference-provider-surface` was briefly behind the docs (flat `src/adapters/` layout vs `src/providers/<vendor>/` leaves). I asked in the thread; the maintainer fast-forwarded the branch.
+
+**How I resolved it:** Confirmed branch and approach in the issue thread before writing code, then based off `feat/contributor-friendly-inference-provider-surface` (see Repo Setup). Build and tests passed once synced.
 
 ### What I'd Do Differently Next Time
 
@@ -232,6 +237,6 @@ pnpm --filter @nous/subcortex-providers exec vitest run \
 
 ## Resources Used
 
-- [Link to helpful documentation]
+- [Issue #319 — Moonshot Kimi Model Provider](https://github.com/orthogonalhq/nous-core/issues/319) (setup blockers and maintainer guidance)
+- [Provider adapter docs](https://docs.nue.orthg.nl/docs/development/provider-adapters)
 - [Tutorial or Stack Overflow post that helped]
-- [GitHub issues or discussions that helped]
