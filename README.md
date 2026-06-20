@@ -165,36 +165,87 @@ pnpm --filter @nous/subcortex-providers exec vitest run \
 
 ### Unit Tests
 
-- [ ] Test case 1: [Description]
-- [ ] Test case 2: [Description]
-- [ ] Test case 3: [Description]
+**Added** `moonshot.test.ts` — a new dedicated suite for the Moonshot Kimi provider leaf:
+
+
+- [x] Definition: asserts the canonical alias, that no built in provider id is hand authored, the identity/protocol/credential metadata (`vedorKey: moonshot`, `chat-completion` protocol + adapter, `https://api.moonshot.ai`, `kimi-k2.6`, `MOONSHOT_API_KEY` auth), hydration into `PROVIDER_DEFINITIONS` with a derived built-in id, and `ProviderDefinitionSchema` validation
+- [x] Adapter: reuseds the shared `chat-completion` adapter, parses a Kimi text response, parses Kimi native tool calls, and returns a text fallback (no throw) on malinformed output
+- [x] Factory: registered under the `moonshot` vendor key and constructs a `ChatCompletionsProvider` from the supplied credential
 
 ### Integration Tests
 
-- [ ] Integration scenario 1
-- [ ] Integration scenario 2
+**Updated** existing catalog/pipeline suites to include `moonshot` (no behavior of other providers changed):
+
+- [x] `provider-pipeline-integration.test.ts`: added `moonshot` to the ordered vendor catalog, asserted it resolves to the `chat-completions` adapter, that it constructs a `ChatCompletionsProvider` from a `MOONSHOT_API_KEY` env credential, and it's absent from lane aware registry lookups (plus env-var cleanup in `afterEach`)
+- [x] `adapter-resolver.test.ts`: added the `moonshot` vecor -> `chat-completions` adapter key assertion (and catalog ordering entry)
+- [x] `provider-codegen.tests.ts`: added `moonshot` to the expected aggregate-codegen output, keeping generated files in sync
+- [x] `provider-definition-types.test.ts`: updated to account for the new leaf
 
 ### Manual Testing
 
-[What you tested manually and results]
+Ran the affected suites locally with `vitest run` (moonshot, pipeline-integration, adapter-resolver, provider-definitions, provider-codegen): **5 files, 38 tests passing**.
+
+**Added** a gated live blackbox suite `moonshot.live.test.ts` that hits the real Moonshot Kimi API for both a chat completion and a streamed response. It is `it.skip` by default (never runs in CI, needs no credential). Run manually with:
+
+```bash
+NOUS_MOONSHOT_LIVE_BT=1 MOONSHOT_API_KEY=sk-... \
+  pnpm --filter @nous/subcortex-providers exec vitest run src/__tests__/providers/moonshot.live.test.ts
+```
 
 ---
 
 ## Implementation Notes
 
-### Week [X] Progress
+### Week 1 Progress
 
-[What you built this week, challenges faced, decisions made]
+Built the Moonshot Kimi provider leaf end-to-end against the current provider-leaf contract from #319, including tests and live API validation. The key realization driving the design was that Moonshot's API is OpenAI compatible chat-completions, so the leaf is **pure metadata + catalog wiring** — there is no bespoke protocol code.
 
-### Week [Y] Progress
+**What I built:**
+- Authored the leaf as a `ProviderDefinitionLeaf` (`definition.ts`): `vendorKey: 'moonshot'`, `protocol`/`adapterKey: 'chat-completions'`, endpoint `https://api.moonshot.ai`, default model `kimi-k2.6`, `MOONSHOT_API_KEY` auth (`api_key`, required, `moonshot` vault namespace), and `capabilities: { streaming: true, nativeToolUse: true }`
+- Deliberately did **not** hand-author a `wellKnownProviderId` — the built-in id is derived from `vendorKey` via `deriveBuiltInProviderId('moonshot')` during hydration into `PROVIDER_DEFINITIONS`, which a test asserts explicitly
+- `adapter.ts` re-exports the shared `chatCompletionsAdapter` from `protocols/openai-api/adapter.ts`; `provider.ts` is a thin `ProviderFactoryModule` that constructs a `ChatCompletionsProvider` from the supplied credential. No `implementation.ts` was needed.
+- Registered the leaf in all three certified catalogs (`provider-definitions.ts`, `provider-adapters.ts`, `provider-factories.ts`) and updated registry wide expectations (catalog ordering, adapter resolution, pipeline construction, codegen aggregate)
+- Wrote the dedicated unit suite `moonshot.test.ts` (definition / adapter / factory) and a gated live blackbox suite `moonshot.live.test.ts` modeled on `codex-cli.live.test.ts`
 
-[Continue documenting as you work]
+**Challenges / decisions:**
+- The model originally referenced (`kimi-k2-0711-preview`) was deprecated by Moonshot on 2026-05-25 and now 404s from the live API. I caught this only by running the gated live test against the real endpoint. Updated the default model to `kimi-k2.6` and fixed the affected expectations in `definition.ts`, `moonshot.test.ts`, and `provider-definitions.test.ts`
+- Confirmed the gated live suite passes (invoke + stream, 2 passed) and re-ran all affected local suites
 
 ### Code Changes
 
-- **Files modified:** [List]
-- **Key commits:** [Links to important commits]
-- **Approach decisions:** [Why you chose certain approaches]
+**Files added (leaf):**
+- `self/subcortex/providers/src/providers/moonshot/definition.ts`
+- `self/subcortex/providers/src/providers/moonshot/adapter.ts`
+- `self/subcortex/providers/src/providers/moonshot/provider.ts`
+- `self/subcortex/providers/src/providers/moonshot/index.ts`
+
+**Files added (tests):**
+- `self/subcortex/providers/src/__tests__/providers/moonshot.test.ts`
+- `self/subcortex/providers/src/__tests__/providers/moonshot.live.test.ts`
+
+**Files modified (catalogs):**
+- `self/subcortex/providers/src/provider-definitions.ts`
+- `self/subcortex/providers/src/provider-adapters.ts`
+- `self/subcortex/providers/src/provider-factories.ts`
+
+**Files modified (registry-wide test expectations):**
+- `self/subcortex/providers/src/__tests__/adapter-resolver.test.ts`
+- `self/subcortex/providers/src/__tests__/provider-pipeline-integration.test.ts`
+- `self/subcortex/providers/src/__tests__/provider-definitions/provider-definitions.test.ts`
+- `self/subcortex/providers/src/__tests__/provider-codegen.test.ts`
+- `self/subcortex/providers/src/__tests__/provider-definition-types.test.ts`
+
+**Key commits:**
+- `32c78078` — feat(providers): add moonshot kimi provider leaf and register in catalogs
+- `26b89226` — test(providers): cover moonshot leaf definition, adapter, and factory
+- `7a217944` — fix(providers): update moonshot default model to kimi-k2.6
+- `d955741d` — test(providers): add gated live test for moonshot kimi provider
+
+**Approach decisions:**
+- **Reuse the `openai-api` protocol instead of writing new code.** Moonshot is OpenAI chat-completions compatible, so the leaf reuses the shared adapter and `ChatCompletionsProvider`. This keeps the new code surface to metadata + wiring and inherits existing text/tool-call/streaming parsing behavior for free
+- **Derive the built-in id rather than hand-author it.** Following the current #319 contract, `wellKnownProviderId` is derived from `vendorKey` at hydration time, so the leaf carries no hardcoded id.
+- **Gate the live test, never run it in CI.** `moonshot.live.test.ts` is `it.skip` by default and only enabled with `NOUS_MOONSHOT_LIVE_BT=1`, so CI needs no credential and stays deterministic, while still giving a real-API smoke path for both invoke and stream
+- **Default to `kimi-k2.6`.** Chosen after the previous `kimi-k2-0711-preview` default was found deprecated (404) against the live API
 
 ---
 
