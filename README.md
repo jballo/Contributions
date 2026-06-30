@@ -251,16 +251,42 @@ Built the Moonshot Kimi provider leaf end-to-end against the current provider-le
 
 ## Pull Request
 
-**PR Link:** [GitHub PR URL when submitted]
+**PR Link:** [PR #398 — feat(providers): add moonshot kimi model provider leaf](https://github.com/orthogonalhq/nous-core/pull/398)
 
-**PR Description:** [Draft or final PR description - much of the content above can be adapted]
+**PR Status:** Merged on Jun 30, 2026 into `orthogonalhq:feat/contributor-friendly-inference-provider-surface`
+
+**PR Summary:** Added Moonshot Kimi as a certified provider leaf for Nous's provider registry. The implementation reuses the shared OpenAI-compatible chat-completions path, registers Moonshot in the generated provider catalogs, adds focused unit coverage, and includes a gated live smoke test for real Moonshot invoke + stream behavior.
+
+**Final PR verification:**
+- `pnpm test`
+- `pnpm lint`
+- `pnpm typecheck`
+- `pnpm build`
+- Gated live Moonshot test passed manually with `NOUS_MOONSHOT_LIVE_BT=1` and `MOONSHOT_API_KEY`
 
 **Maintainer Feedback:**
 - **Jun 7, 2026** ([issue #319](https://github.com/orthogonalhq/nous-core/issues/319)): `main` is a release branch — don't develop there. Fork off `dev` or a team integration branch. Adapter surface refactor coming on a special integration branch for the class.
 - **Jun 11, 2026:** Target `feat/contributor-friendly-inference-provider-surface` for PRs, not `dev`. Implement as certified provider leaves under `self/subcortex/providers/src/providers/<vendor>/`; don't hand-edit generated catalogs. [Provider adapter docs](https://docs.nue.orthg.nl/docs/development/provider-adapters) are the source of truth.
 - **Jun 13, 2026:** Fast-forwarded the integration branch after I flagged it was still on the flat adapter layout while the docs described the leaf structure.
+- **Jun 23, 2026:** Maintainer requested two credential-handling changes after reviewing the PR merge ref:
+  - Prevent Moonshot from falling back to `OPENAI_API_KEY` through the shared `ChatCompletionsProvider` when `MOONSHOT_API_KEY` is missing.
+  - Add `auth.header` metadata so Settings key-testing and model discovery know to inject `Authorization: Bearer <key>`.
+- **Jun 27, 2026:** Resolved the requested changes in commit `03553f9` by explicitly resolving the Moonshot credential in the factory and throwing when neither `options.apiKey` nor `MOONSHOT_API_KEY` is present. Also added the required auth header metadata:
+  ```ts
+  auth: {
+    envVar: 'MOONSHOT_API_KEY',
+    vaultKeyNamespace: 'moonshot',
+    header: {
+      name: 'Authorization',
+      scheme: 'bearer',
+    },
+    required: true,
+    purpose: 'api_key',
+  }
+  ```
+- **Jun 30, 2026:** Maintainer approved the updated PR, confirming the fail-closed credential behavior, auth header metadata, generated catalog consistency, and added tests. PR #398 was merged the same day.
 
-**Status:** [Awaiting review / Iterating / Approved / Merged]
+**Status:** Merged
 
 ---
 
@@ -268,7 +294,10 @@ Built the Moonshot Kimi provider leaf end-to-end against the current provider-le
 
 ### Technical Skills Gained
 
-[What you learned technically]
+- Learned how Nous's certified provider leaf architecture separates metadata (`definition.ts`), adapter behavior, provider factory construction, generated catalogs, and registry tests.
+- Reused an existing OpenAI-compatible chat-completions protocol instead of creating a custom Moonshot runtime, which kept the contribution smaller and better aligned with the codebase.
+- Added credential metadata that supports both runtime invocation and Settings/model-discovery flows, including `envVar`, vault namespace, required API key status, and Bearer header injection details.
+- Used gated live testing to validate behavior against the real Moonshot API without requiring CI credentials.
 
 ### Challenges Overcome
 
@@ -280,14 +309,16 @@ Before I could reproduce the gap locally, I hit a few blockers from the [issue t
 
 **How I resolved it:** Confirmed branch and approach in the issue thread before writing code, then based off `feat/contributor-friendly-inference-provider-surface` (see Repo Setup). Build and tests passed once synced.
 
+During PR review, one more important issue surfaced: the shared `ChatCompletionsProvider` still had OpenAI-specific environment fallback behavior. If Moonshot passed `undefined` for its key, it could accidentally fall back to `OPENAI_API_KEY`. I fixed this in the Moonshot factory by resolving only `options.apiKey` or `process.env.MOONSHOT_API_KEY`, then throwing if neither exists. That made the provider fail closed and avoided leaking an OpenAI key to Moonshot's endpoint.
+
 ### What I'd Do Differently Next Time
 
-[Reflection on your process]
+I would check credential fallback behavior earlier, especially when reusing a shared provider implementation from another vendor. Reusing the OpenAI-compatible protocol was still the right call, but the review showed that shared runtime code can carry provider-specific assumptions that are easy to miss unless tests cover missing-credential cases.
 
 ---
 
 ## Resources Used
 
 - [Issue #319 — Moonshot Kimi Model Provider](https://github.com/orthogonalhq/nous-core/issues/319) (setup blockers and maintainer guidance)
+- [PR #398 — feat(providers): add moonshot kimi model provider leaf](https://github.com/orthogonalhq/nous-core/pull/398)
 - [Provider adapter docs](https://docs.nue.orthg.nl/docs/development/provider-adapters)
-- [Tutorial or Stack Overflow post that helped]
